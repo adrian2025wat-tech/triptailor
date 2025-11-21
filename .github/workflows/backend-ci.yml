@@ -1,0 +1,39 @@
+name: CI/CD - Backend TripTailor
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - 'feature/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./backend
+
+      - name: Run tests
+        run: npm test
+        working-directory: ./backend
+
+      - name: Docker login
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}/backend:latest .
+        working-directory: ./backend
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}/backend:latest
